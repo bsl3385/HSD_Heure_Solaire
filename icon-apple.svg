@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#0C0E12"/>
+  <!-- Cercle externe -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#1e2530" stroke-width="2"/>
+  <!-- Arc jour -->
+  <path d="M 256 56 A 200 200 0 0 1 456 256" fill="none" stroke="#F5A623" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 456 256 A 200 200 0 0 1 256 456" fill="none" stroke="#F5A623" stroke-width="12" stroke-linecap="round" opacity="0.5"/>
+  <!-- Aiguille -->
+  <line x1="256" y1="256" x2="256" y2="80" stroke="#F5A623" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="256" cy="80" r="10" fill="#F5A623"/>
+  <circle cx="256" cy="256" r="12" fill="#F5A623"/>
+  <!-- Texte HSD -->
+  <text x="256" y="340" text-anchor="middle" font-family="Georgia,serif" font-size="72" font-weight="300" fill="#DDE2EC" letter-spacing="4">HSD</text>
+  <!-- Point soleil -->
+  <circle cx="256" cy="80" r="6" fill="#FFE066"/>
+</svg>

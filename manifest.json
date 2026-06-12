@@ -1,0 +1,40 @@
+{
+  "name": "Heure Solaire Décimale",
+  "short_name": "HSD",
+  "description": "Horloge solaire et planification industrielle basée sur le cycle du soleil",
+  "start_url": "./horloge-industrie.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0C0E12",
+  "theme_color": "#F5A623",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "health", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Convertisseur HSD",
+      "short_name": "Convertir",
+      "description": "Convertir une heure en HSD",
+      "url": "./horloge-industrie.html#convertisseur"
+    },
+    {
+      "name": "Planning shifts",
+      "short_name": "Planning",
+      "description": "Voir les shifts du jour",
+      "url": "./horloge-industrie.html#shifts"
+    }
+  ]
+}
