@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -513,10 +514,44 @@ body {
 }
 
 @media (max-width: 700px) {
-  .main-cols { grid-template-columns: 1fr; }
-  .status-row { grid-template-columns: repeat(3, 1fr); }
-  .status-row .stat-cell:nth-child(4),
+  body { padding: 0.75rem; }
+
+  .brand-tag { display: none; }
+
+  .status-row { grid-template-columns: repeat(2, 1fr); }
   .status-row .stat-cell:nth-child(5) { display: none; }
+  .stat-value { font-size: 1.1rem; }
+
+  .main-cols { grid-template-columns: 1fr; }
+
+  .shift-row {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.4rem;
+  }
+  .shift-time { display: none; }
+  .shift-hsd { font-size: 0.6rem; }
+
+  .season-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .season-table {
+    min-width: 480px;
+    font-size: 0.6rem;
+  }
+  .season-table th, .season-table td {
+    padding: 0.4rem 0.4rem;
+    white-space: nowrap;
+  }
+
+  .sector-grid { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  .sector-btn { padding: 0.5rem; }
+  .sector-desc { display: none; }
+
+  .timeline-wrapper { padding-top: 1.2rem; }
+  .tl-now-label { font-size: 0.45rem; }
+
+  .footer { flex-direction: column; gap: 0.3rem; text-align: center; }
 }
 </style>
 </head>
@@ -676,6 +711,7 @@ body {
   <!-- Tableau saisonnier -->
   <div class="panel">
     <div class="panel-title">Correspondances saisonnières — HSD 25 (lever) et HSD 75 (coucher) en heure légale</div>
+    <div class="season-table-wrapper">
     <table class="season-table">
       <thead>
         <tr>
@@ -690,6 +726,7 @@ body {
       </thead>
       <tbody id="seasonTbody"></tbody>
     </table>
+    </div>
   </div>
 
   <div class="footer">
