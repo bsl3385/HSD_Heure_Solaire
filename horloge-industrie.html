@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F7F4EF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="HSD">
+<meta name="description" content="Horloge solaire décimale — planification industrielle">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-apple.svg">
+<title>HSD Industrie — Planification Solaire</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F7F4EF;
+  --panel: #FFFFFF;
+  --border: rgba(0,0,0,0.08);
+  --ambre: #C97B00;
+  --ambre-dim: rgba(201,123,0,0.1);
+  --vert: #1A8A74;
+  --vert-dim: rgba(26,138,116,0.1);
+  --rouge: #D04040;
+  --rouge-dim: rgba(208,64,64,0.1);
+  --bleu: #2E5FC2;
+  --bleu-dim: rgba(46,95,194,0.1);
+  --txt: #1A1C22;
+  --txt-dim: #7A808F;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  padding-left: max(1.5rem, env(safe-area-inset-left));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+}
+
+/* Layout grille principale */
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Header */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--txt);
+}
+
+.brand-tag {
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ambre);
+  background: var(--ambre-dim);
+  padding: 0.2em 0.6em;
+  border: 1px solid rgba(245,166,35,0.2);
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--vert);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vert);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Ligne état temps réel */
+.status-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.stat-cell {
+  background: var(--panel);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.stat-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--txt-dim);
+}
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--txt);
+  line-height: 1;
+}
+
+.stat-value.accent { color: var(--ambre); }
+.stat-value.green { color: var(--vert); }
+
+.stat-sub {
+  font-size: 0.55rem;
+  color: var(--txt-dim);
+  font-family: var(--mono);
+}
+
+/* Deux colonnes principales */
+.main-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Panneau générique */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.panel-title {
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--txt-dim);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Convertisseur */
+.converter-tabs {
+  display: flex;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--bg);
+  border: none;
+  color: var(--txt-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+  background: var(--panel);
+  color: var(--ambre);
+  border-bottom: 2px solid var(--ambre);
+}
+
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--txt-dim);
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.hsd-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--txt);
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.hsd-input:focus {
+  border-color: var(--ambre);
+}
+
+.convert-arrow {
+  text-align: center;
+  color: var(--txt-dim);
+  font-size: 0.8rem;
+}
+
+.result-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.75rem 1rem;
+  font-family: var(--mono);
+  font-size: 1.4rem;
+  color: var(--ambre);
+  min-height: 2.5rem;
+  font-weight: 600;
+}
+
+.result-detail {
+  font-size: 0.6rem;
+  color: var(--txt-dim);
+  margin-top: 0.25rem;
+  font-family: var(--mono);
+}
+
+/* Planning shifts */
+.shifts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shift-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.shift-row.active-shift {
+  border-left-color: var(--ambre);
+  background: var(--ambre-dim);
+}
+
+.shift-row.next-shift {
+  border-left-color: var(--vert);
+}
+
+.shift-name {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--txt-dim);
+  min-width: 80px;
+}
+
+.shift-bar-track {
+  height: 4px;
+  background: rgba(255,255,255,0.05);
+  position: relative;
+  border-radius: 2px;
+}
+
+.shift-bar-fill {
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+.shift-hsd {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--txt-dim);
+  white-space: nowrap;
+}
+
+.shift-time {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--txt-dim);
+  white-space: nowrap;
+}
+
+/* Timeline 24h */
+.timeline-wrapper {
+  position: relative;
+  padding: 1.5rem 0 0.5rem;
+}
+
+.timeline-track {
+  height: 32px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.tl-night-left, .tl-night-right {
+  position: absolute;
+  height: 100%;
+  background: rgba(91,141,239,0.08);
+}
+
+.tl-day {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,107,53,0.2), rgba(255,224,102,0.25), rgba(255,107,53,0.2));
+}
+
+.tl-now {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: var(--ambre);
+  box-shadow: 0 0 8px var(--ambre);
+  transition: left 1s ease;
+}
+
+.tl-now-label {
+  position: absolute;
+  top: -1.2rem;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: var(--ambre);
+  white-space: nowrap;
+  transition: left 1s ease;
+}
+
+.tl-markers {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.3rem;
+}
+
+.tl-marker {
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  color: var(--txt-dim);
+}
+
+.tl-shift-block {
+  position: absolute;
+  height: 100%;
+  opacity: 0.35;
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Tableau conversion saisonnier */
+.season-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65rem;
+}
+
+.season-table th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--txt-dim);
+  border-bottom: 1px solid var(--border);
+}
+
+.season-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-family: var(--mono);
+  color: var(--txt);
+}
+
+.season-table tr:last-child td { border-bottom: none; }
+
+.season-table td.accent { color: var(--ambre); }
+.season-table td.dim { color: var(--txt-dim); }
+
+.season-badge {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  border-radius: 2px;
+}
+
+/* Secteur picker */
+.sector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.sector-btn {
+  padding: 0.6rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--txt-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sector-btn:hover, .sector-btn.active {
+  border-color: var(--ambre);
+  color: var(--txt);
+  background: var(--ambre-dim);
+}
+
+.sector-icon { font-size: 1rem; }
+.sector-name { font-weight: 500; }
+.sector-desc { font-size: 0.5rem; color: var(--txt-dim); opacity: 0.7; }
+
+/* Référence HSD rapide */
+.ref-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.ref-cell {
+  background: var(--panel);
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+}
+
+.ref-hsd {
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--ambre);
+  display: block;
+}
+
+.ref-label {
+  font-size: 0.45rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--txt-dim);
+  display: block;
+  margin-top: 0.2rem;
+}
+
+/* Pied de page */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: var(--txt-dim);
+}
+
+@media (max-width: 700px) {
+  .main-cols { grid-template-columns: 1fr; }
+  .status-row { grid-template-columns: repeat(3, 1fr); }
+  .status-row .stat-cell:nth-child(4),
+  .status-row .stat-cell:nth-child(5) { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="brand">HSD Industrie</span>
+      <span class="brand-tag">Prototype v0.1</span>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span id="locationLabel">Localisation…</span>
+    </div>
+  </div>
+
+  <!-- Statut temps réel -->
+  <div class="status-row">
+    <div class="stat-cell">
+      <span class="stat-label">HSD Actuel</span>
+      <span class="stat-value accent" id="hsdNow">--.-</span>
+      <span class="stat-sub">/ 100 unités</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">Heure légale</span>
+      <span class="stat-value" id="legalNow">--:--:--</span>
+      <span class="stat-sub" id="tzLabel">fuseau local</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">Phase solaire</span>
+      <span class="stat-value green" id="phaseNow" style="font-size:0.85rem;margin-top:0.2rem">—</span>
+      <span class="stat-sub" id="phaseDetail">—</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">Lever · Coucher</span>
+      <span class="stat-value" id="riseSet" style="font-size:0.9rem">--:-- · --:--</span>
+      <span class="stat-sub" id="dayDuration">durée du jour: —</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">Prochain événement</span>
+      <span class="stat-value green" id="nextEvent" style="font-size:0.85rem;margin-top:0.2rem">—</span>
+      <span class="stat-sub" id="nextIn">dans —</span>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="panel">
+    <div class="panel-title">Frise journalière — 00:00 → 24:00</div>
+    <div class="timeline-wrapper">
+      <div class="timeline-track" id="tlTrack">
+        <div class="tl-night-left" id="tlNightL"></div>
+        <div class="tl-day" id="tlDay"></div>
+        <div class="tl-night-right" id="tlNightR"></div>
+        <div id="tlShifts"></div>
+        <div class="tl-now-label" id="tlNowLabel">▼</div>
+        <div class="tl-now" id="tlNow"></div>
+      </div>
+      <div class="tl-markers">
+        <span class="tl-marker">00:00<br>HSD 0</span>
+        <span class="tl-marker" style="text-align:center">06:00<br>~HSD 25</span>
+        <span class="tl-marker" style="text-align:center">12:00<br>HSD 50</span>
+        <span class="tl-marker" style="text-align:center">18:00<br>~HSD 75</span>
+        <span class="tl-marker" style="text-align:right">24:00<br>HSD 100</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deux colonnes -->
+  <div class="main-cols">
+
+    <!-- Convertisseur -->
+    <div class="panel">
+      <div class="panel-title">Convertisseur HSD ↔ Heure légale</div>
+
+      <div class="converter-tabs">
+        <button class="tab-btn active" id="tabHsdToTime" onclick="switchTab('hsd')">HSD → Heure</button>
+        <button class="tab-btn" id="tabTimeToHsd" onclick="switchTab('time')">Heure → HSD</button>
+      </div>
+
+      <div id="panelHsdToTime">
+        <div class="input-row">
+          <span class="input-label">Entrez HSD</span>
+          <input class="hsd-input" type="number" id="inputHSD" min="0" max="99.99" step="0.01" placeholder="ex: 32.50" oninput="convertHSDtoTime()">
+        </div>
+        <div class="convert-arrow">↓</div>
+        <div class="result-box" id="resultTime">—</div>
+        <div class="result-detail" id="resultTimeDetail">Entrez une valeur HSD (0–100)</div>
+      </div>
+
+      <div id="panelTimeToHsd" style="display:none">
+        <div class="input-row">
+          <span class="input-label">Entrez heure</span>
+          <input class="hsd-input" type="time" id="inputTime" oninput="convertTimeToHSD()" style="font-size:1.1rem;padding:0.5rem 0.75rem">
+        </div>
+        <div class="convert-arrow">↓</div>
+        <div class="result-box" id="resultHSD">—</div>
+        <div class="result-detail" id="resultHSDDetail">Entrez une heure légale</div>
+      </div>
+
+      <!-- Référence rapide -->
+      <div style="margin-top:0.5rem">
+        <div class="panel-title" style="margin-bottom:0.75rem">Référence rapide</div>
+        <div class="ref-grid">
+          <div class="ref-cell">
+            <span class="ref-hsd">0</span>
+            <span class="ref-label">Minuit solaire</span>
+          </div>
+          <div class="ref-cell">
+            <span class="ref-hsd" id="refRise">~25</span>
+            <span class="ref-label">Lever</span>
+          </div>
+          <div class="ref-cell">
+            <span class="ref-hsd">50</span>
+            <span class="ref-label">Zénith</span>
+          </div>
+          <div class="ref-cell">
+            <span class="ref-hsd" id="refSet">~75</span>
+            <span class="ref-label">Coucher</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Planning shifts -->
+    <div class="panel">
+      <div class="panel-title">Planification des shifts — relatif au soleil</div>
+
+      <div class="sector-grid" style="margin-bottom:0.75rem">
+        <button class="sector-btn active" onclick="setSector('sante')" id="sec-sante">
+          <span class="sector-icon">🏥</span>
+          <span class="sector-name">Santé</span>
+          <span class="sector-desc">Chronothérapie</span>
+        </button>
+        <button class="sector-btn" onclick="setSector('industrie')" id="sec-industrie">
+          <span class="sector-icon">🏭</span>
+          <span class="sector-name">Industrie</span>
+          <span class="sector-desc">3×8 solaire</span>
+        </button>
+        <button class="sector-btn" onclick="setSector('education')" id="sec-education">
+          <span class="sector-icon">🎓</span>
+          <span class="sector-name">Éducation</span>
+          <span class="sector-desc">Rythme cognitif</span>
+        </button>
+        <button class="sector-btn" onclick="setSector('agriculture')" id="sec-agriculture">
+          <span class="sector-icon">🌾</span>
+          <span class="sector-name">Agriculture</span>
+          <span class="sector-desc">Cycle naturel</span>
+        </button>
+      </div>
+
+      <div class="shifts-grid" id="shiftsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Tableau saisonnier -->
+  <div class="panel">
+    <div class="panel-title">Correspondances saisonnières — HSD 25 (lever) et HSD 75 (coucher) en heure légale</div>
+    <table class="season-table">
+      <thead>
+        <tr>
+          <th>Saison</th>
+          <th>Date repère</th>
+          <th>HSD 25 (lever)</th>
+          <th>HSD 75 (coucher)</th>
+          <th>Durée jour solaire</th>
+          <th>Shift S+0 → S+50</th>
+          <th>Shift S+50 → S+100</th>
+        </tr>
+      </thead>
+      <tbody id="seasonTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <span>Heure Solaire Décimale — Système HSD v0.1</span>
+    <span id="footerCoords">Calculs astronomiques en temps réel</span>
+  </div>
+
+</div>
+
+<script>
+// ─── Astronomie ──────────────────────────────────────────────────────────────
+function toRad(d) { return d * Math.PI / 180; }
+function toDeg(r) { return r * 180 / Math.PI; }
+
+function getSolarTimes(date, lat, lon) {
+  // Algorithme NOAA — formule equation du temps correcte
+  const JD = Math.floor(date.getTime() / 86400000) + 2440587.5 + 0.5;
+  const n  = JD - 2451545.0;
+  const L0 = (280.46646 + 0.9856474 * n) % 360;
+  const M  = (357.52911 + 0.9856003 * n) % 360;
+  const Mr = toRad(M);
+  const C  = 1.914602 * Math.sin(Mr) + 0.019993 * Math.sin(2*Mr) + 0.000289 * Math.sin(3*Mr);
+  const sunLon = L0 + C;
+  const e0  = 23.439291 - 0.0000004 * n;
+  const e0r = toRad(e0);
+  const decr = Math.asin(Math.sin(e0r) * Math.sin(toRad(sunLon)));
+  const y   = Math.tan(toRad(e0 / 2)) ** 2;
+  const e   = 0.016708634;
+  const EqT = 4 * toDeg(
+    y * Math.sin(toRad(2 * L0))
+    - 2 * e * Math.sin(Mr)
+    + 4 * e * y * Math.sin(Mr) * Math.cos(toRad(2 * L0))
+    - 0.5 * y * y * Math.sin(toRad(4 * L0))
+    - 1.25 * e * e * Math.sin(toRad(2 * M))
+  );
+  const tzOffset = -date.getTimezoneOffset();
+  const solarNoon = 720 - 4 * lon - EqT + tzOffset;
+  const cosHA = (Math.cos(toRad(90.833)) - Math.sin(toRad(lat)) * Math.sin(decr))
+              / (Math.cos(toRad(lat)) * Math.cos(decr));
+  let sunrise, sunset;
+  if (cosHA < -1) { sunrise = 0; sunset = 1440; }
+  else if (cosHA > 1) { sunrise = 720; sunset = 720; }
+  else {
+    const HA = toDeg(Math.acos(cosHA));
+    sunrise = solarNoon - 4 * HA;
+    sunset  = solarNoon + 4 * HA;
+  }
+  return { sunrise, sunset, solarNoon };
+}
+
+function minToHHMM(m) {
+  const total = ((m % 1440) + 1440) % 1440;
+  const h = Math.floor(total / 60), min = Math.floor(total % 60);
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+
+function minToHHMMSS(m) {
+  const total = ((m % 1440) + 1440) % 1440;
+  const h = Math.floor(total / 60), min = Math.floor(total % 60);
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+
+// HSD 50 = midi solaire (solarNoon), HSD 0/100 = minuit solaire
+// solarNoon est en minutes depuis minuit légal
+function hsdToMinutes(hsd, solarNoon) {
+  // offset depuis midi solaire : HSD 50 → 0, HSD 0 → -720, HSD 100 → +720
+  const offsetFromNoon = (hsd - 50) / 100 * 1440;
+  return ((solarNoon + offsetFromNoon) % 1440 + 1440) % 1440;
+}
+
+function minutesToHSD(minutes, solarNoon) {
+  // delta en minutes depuis midi solaire, ramené dans [-720, +720]
+  let delta = minutes - solarNoon;
+  if (delta > 720)  delta -= 1440;
+  if (delta < -720) delta += 1440;
+  return 50 + (delta / 1440) * 100;
+}
+
+function formatDuration(minutes) {
+  const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
+  return `${h}h${m > 0 ? m + 'min' : ''}`;
+}
+
+// ─── État global ─────────────────────────────────────────────────────────────
+let lat = 48.8566, lon = 2.3522;
+let currentSolar = { sunrise: 370, sunset: 1280, solarNoon: 825 };
+let currentSector = 'sante';
+
+// ─── Secteurs / shifts ───────────────────────────────────────────────────────
+const SECTORS = {
+  sante: {
+    shifts: [
+      { name: 'Nuit',       hsdStart: 85,  hsdEnd: 25,  color: '#5B8DEF', desc: 'Soins nocturnes' },
+      { name: 'Matin',      hsdStart: 25,  hsdEnd: 55,  color: '#F5A623', desc: 'Éveil, traitements' },
+      { name: 'Après-midi', hsdStart: 55,  hsdEnd: 85,  color: '#3ECFB2', desc: 'Rééducation, visites' },
+    ]
+  },
+  industrie: {
+    shifts: [
+      { name: 'Poste A',    hsdStart: 0,   hsdEnd: 33,  color: '#5B8DEF', desc: 'Nuit–aube' },
+      { name: 'Poste B',    hsdStart: 33,  hsdEnd: 66,  color: '#F5A623', desc: 'Matin–après-midi' },
+      { name: 'Poste C',    hsdStart: 66,  hsdEnd: 100, color: '#3ECFB2', desc: 'Soir–nuit' },
+    ]
+  },
+  education: {
+    shifts: [
+      { name: 'Bloc 1',     hsdStart: 28,  hsdEnd: 42,  color: '#F5A623', desc: 'Cognitif intense' },
+      { name: 'Pause',      hsdStart: 42,  hsdEnd: 47,  color: '#4A5568', desc: 'Zénith solaire' },
+      { name: 'Bloc 2',     hsdStart: 47,  hsdEnd: 62,  color: '#3ECFB2', desc: 'Apprentissage actif' },
+      { name: 'Activités',  hsdStart: 62,  hsdEnd: 72,  color: '#FF6B35', desc: 'Sport, arts' },
+    ]
+  },
+  agriculture: {
+    shifts: [
+      { name: 'Aube',       hsdStart: 22,  hsdEnd: 35,  color: '#FF6B35', desc: 'Arrosage, semis' },
+      { name: 'Matin',      hsdStart: 35,  hsdEnd: 50,  color: '#F5A623', desc: 'Travaux principaux' },
+      { name: 'Sieste',     hsdStart: 50,  hsdEnd: 58,  color: '#4A5568', desc: 'Chaleur max' },
+      { name: 'Soir',       hsdStart: 58,  hsdEnd: 75,  color: '#3ECFB2', desc: 'Récolte, traitement' },
+    ]
+  }
+};
+
+// ─── Rendu shifts ─────────────────────────────────────────────────────────────
+function renderShifts(hsdNow, solarNoon, sector) {
+  const shifts = SECTORS[sector].shifts;
+  const grid = document.getElementById('shiftsGrid');
+  grid.innerHTML = '';
+
+  shifts.forEach(shift => {
+    const startMin = hsdToMinutes(shift.hsdStart, solarNoon);
+    const endMin   = hsdToMinutes(shift.hsdEnd, solarNoon);
+
+    // Normalisation pour calcul durée
+    let dur = shift.hsdEnd - shift.hsdStart;
+    if (dur < 0) dur += 100;
+    const durMin = dur / 100 * 1440;
+
+    // Est-ce le shift actif ?
+    let isActive = false;
+    if (shift.hsdEnd > shift.hsdStart) {
+      isActive = hsdNow >= shift.hsdStart && hsdNow < shift.hsdEnd;
+    } else {
+      isActive = hsdNow >= shift.hsdStart || hsdNow < shift.hsdEnd;
+    }
+
+    // Progression dans le shift
+    let progress = 0;
+    if (isActive) {
+      let elapsed = hsdNow - shift.hsdStart;
+      if (elapsed < 0) elapsed += 100;
+      progress = (elapsed / dur) * 100;
+    }
+
+    const row = document.createElement('div');
+    row.className = `shift-row${isActive ? ' active-shift' : ''}`;
+    row.innerHTML = `
+      <div>
+        <div class="shift-name">${shift.name}</div>
+        <div class="shift-time" style="font-size:0.45rem;opacity:0.6;margin-top:0.2rem">${shift.desc}</div>
+      </div>
+      <div>
+        <div class="shift-bar-track">
+          <div class="shift-bar-fill" style="width:${progress}%;background:${shift.color}"></div>
+        </div>
+      </div>
+      <div class="shift-hsd" style="color:${shift.color}">
+        S${shift.hsdStart}→S${shift.hsdEnd < shift.hsdStart ? shift.hsdEnd+'*' : shift.hsdEnd}
+      </div>
+      <div>
+        <div class="shift-time">${minToHHMM(startMin)}</div>
+        <div class="shift-time">${minToHHMM(endMin)}</div>
+        <div class="shift-time" style="color:var(--txt-dim);font-size:0.5rem">${formatDuration(durMin)}</div>
+      </div>
+    `;
+    grid.appendChild(row);
+
+    // Ajouter bloc sur timeline
+    addTimelineShift(shift, startMin, endMin, solarNoon);
+  });
+}
+
+// ─── Timeline ─────────────────────────────────────────────────────────────────
+function addTimelineShift(shift, startMin, endMin, solarNoon) {
+  const container = document.getElementById('tlShifts');
+  const pct = (p) => `${(p / 1440 * 100).toFixed(2)}%`;
+  let durMin = endMin - startMin;
+  if (durMin < 0) durMin += 1440;
+
+  const block = document.createElement('div');
+  block.className = 'tl-shift-block';
+  block.style.left = pct(startMin);
+  block.style.width = pct(durMin);
+  block.style.background = shift.color;
+  container.appendChild(block);
+}
+
+// ─── Tableau saisonnier ───────────────────────────────────────────────────────
+function renderSeasonTable() {
+  const tbody = document.getElementById('seasonTbody');
+  tbody.innerHTML = '';
+
+  const seasons = [
+    { name: '❄️ Hiver',    date: new Date(2026, 0, 15),  badge: '#E0ECFA', color: '#2E5FC2' },
+    { name: '🌸 Printemps', date: new Date(2026, 3, 15),  badge: '#E2F5E2', color: '#1A7A40' },
+    { name: '☀️ Été',      date: new Date(2026, 6, 15),  badge: '#FFF3D0', color: '#9A5C00' },
+    { name: '🍂 Automne',  date: new Date(2026, 9, 15),  badge: '#FDECD8', color: '#A04010' },
+  ];
+
+  seasons.forEach(s => {
+    const { sunrise, sunset, solarNoon } = getSolarTimes(s.date, lat, lon);
+    const riseHSD = minutesToHSD(sunrise, solarNoon).toFixed(1);
+    const setHSD  = minutesToHSD(sunset, solarNoon).toFixed(1);
+    const durMin  = sunset - sunrise;
+    const shift1End = hsdToMinutes(50, solarNoon);
+    const shift2End = hsdToMinutes(100, solarNoon);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="season-badge" style="background:${s.badge};color:${s.color}">${s.name}</span></td>
+      <td class="dim">${s.date.toLocaleDateString('fr-FR', {day:'numeric',month:'short'})}</td>
+      <td class="accent">${minToHHMM(sunrise)}</td>
+      <td class="accent">${minToHHMM(sunset)}</td>
+      <td>${formatDuration(durMin)}</td>
+      <td class="dim">${minToHHMM(sunrise)} → ${minToHHMM(shift1End)}</td>
+      <td class="dim">${minToHHMM(shift1End)} → ${minToHHMM(shift2End)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── Convertisseur ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('panelHsdToTime').style.display = tab === 'hsd' ? 'block' : 'none';
+  document.getElementById('panelTimeToHsd').style.display = tab === 'time' ? 'block' : 'none';
+  document.getElementById('tabHsdToTime').classList.toggle('active', tab === 'hsd');
+  document.getElementById('tabTimeToHsd').classList.toggle('active', tab === 'time');
+}
+
+function convertHSDtoTime() {
+  const val = parseFloat(document.getElementById('inputHSD').value);
+  if (isNaN(val) || val < 0 || val >= 100) {
+    document.getElementById('resultTime').textContent = '—';
+    document.getElementById('resultTimeDetail').textContent = 'Valeur entre 0 et 100';
+    return;
+  }
+  const { solarNoon, sunrise, sunset } = currentSolar;
+  const minutes = hsdToMinutes(val, solarNoon);
+  const timeStr = minToHHMM(minutes);
+  document.getElementById('resultTime').textContent = timeStr;
+
+  // Contexte
+  let context = '';
+  const sunriseHSD = minutesToHSD(sunrise, solarNoon);
+  const sunsetHSD  = minutesToHSD(sunset, solarNoon);
+  if (val < sunriseHSD) context = 'Nuit — avant le lever du soleil';
+  else if (val < sunriseHSD + 8) context = 'Aube — soleil bas, lumière douce';
+  else if (val < 46) context = 'Matin — montée du soleil';
+  else if (val < 54) context = 'Zénith — soleil au plus haut';
+  else if (val < sunsetHSD - 5) context = 'Après-midi — descente solaire';
+  else if (val < sunsetHSD) context = 'Crépuscule — coucher imminent';
+  else context = 'Nuit — après le coucher';
+  document.getElementById('resultTimeDetail').textContent = context;
+}
+
+function convertTimeToHSD() {
+  const val = document.getElementById('inputTime').value;
+  if (!val) return;
+  const [h, m] = val.split(':').map(Number);
+  const minutes = h * 60 + m;
+  const { solarNoon, sunrise, sunset } = currentSolar;
+  const hsd = minutesToHSD(minutes, solarNoon).toFixed(2);
+  document.getElementById('resultHSD').textContent = `S${hsd}`;
+  const durMin = sunset - sunrise;
+  document.getElementById('resultHSDDetail').textContent =
+    `Équivalent HSD — durée jour aujourd'hui: ${formatDuration(durMin)}`;
+}
+
+// ─── Tick principal ───────────────────────────────────────────────────────────
+function setSector(name) {
+  currentSector = name;
+  document.querySelectorAll('.sector-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`sec-${name}`).classList.add('active');
+}
+
+function tick() {
+  const now = new Date();
+  const { sunrise, sunset, solarNoon } = getSolarTimes(now, lat, lon);
+  currentSolar = { sunrise, sunset, solarNoon };
+
+  const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+  const hsd = minutesToHSD(nowMin, solarNoon);
+
+  // Header stats
+  document.getElementById('hsdNow').textContent = hsd.toFixed(2);
+  document.getElementById('legalNow').textContent =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+  // Phase
+  const sunriseHSD = minutesToHSD(sunrise, solarNoon);
+  const sunsetHSD  = minutesToHSD(sunset, solarNoon);
+  let phase = '', phaseDetail = '';
+  if (hsd < sunriseHSD - 1) { phase = 'Nuit profonde'; phaseDetail = `Lever dans ${formatDuration(sunrise - nowMin)}`; }
+  else if (hsd < sunriseHSD) { phase = 'Aube'; phaseDetail = `Lever dans ${formatDuration(sunrise - nowMin)}`; }
+  else if (hsd < sunriseHSD + 8) { phase = 'Matin tôt'; phaseDetail = `S+${(hsd - sunriseHSD).toFixed(1)} après lever`; }
+  else if (hsd < 46) { phase = 'Matin'; phaseDetail = `Zénith dans ${formatDuration(solarNoon - nowMin)}`; }
+  else if (hsd < 54) { phase = 'Zénith'; phaseDetail = `Midi solaire atteint`; }
+  else if (hsd < sunsetHSD - 5) { phase = 'Après-midi'; phaseDetail = `Coucher dans ${formatDuration(sunset - nowMin)}`; }
+  else if (hsd < sunsetHSD) { phase = 'Crépuscule'; phaseDetail = `Coucher dans ${formatDuration(sunset - nowMin)}`; }
+  else { phase = 'Nuit'; phaseDetail = `Aube demain ~${minToHHMM(sunrise)}`; }
+  document.getElementById('phaseNow').textContent = phase;
+  document.getElementById('phaseDetail').textContent = phaseDetail;
+
+  // Lever/coucher
+  document.getElementById('riseSet').textContent = `${minToHHMM(sunrise)} · ${minToHHMM(sunset)}`;
+  document.getElementById('dayDuration').textContent = `durée du jour: ${formatDuration(sunset - sunrise)}`;
+
+  // Prochain événement
+  const events = [
+    { name: 'Lever', min: sunrise },
+    { name: 'Zénith', min: solarNoon },
+    { name: 'Coucher', min: sunset },
+  ];
+  let next = events.find(e => e.min > nowMin);
+  if (!next) next = { name: 'Lever (J+1)', min: sunrise + 1440 };
+  document.getElementById('nextEvent').textContent = next.name;
+  document.getElementById('nextIn').textContent = `dans ${formatDuration(next.min - nowMin)}`;
+
+  // Timeline
+  const pct = (p) => `${(p / 1440 * 100).toFixed(2)}%`;
+  document.getElementById('tlNightL').style.left = '0';
+  document.getElementById('tlNightL').style.width = pct(sunrise);
+  document.getElementById('tlDay').style.left = pct(sunrise);
+  document.getElementById('tlDay').style.width = pct(sunset - sunrise);
+  document.getElementById('tlNightR').style.left = pct(sunset);
+  document.getElementById('tlNightR').style.width = pct(1440 - sunset);
+  document.getElementById('tlNow').style.left = pct(nowMin);
+  document.getElementById('tlNowLabel').style.left = pct(nowMin);
+  document.getElementById('tlNowLabel').textContent = `▼ S${hsd.toFixed(1)}`;
+
+  // Shifts (reset d'abord)
+  document.getElementById('tlShifts').innerHTML = '';
+  renderShifts(hsd, solarNoon, currentSector);
+
+  // Référence rapide
+  document.getElementById('refRise').textContent = sunriseHSD.toFixed(1);
+  document.getElementById('refSet').textContent  = sunsetHSD.toFixed(1);
+
+  // Fuseau
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  document.getElementById('tzLabel').textContent = tz;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+tick();
+setInterval(tick, 1000);
+renderSeasonTable();
+
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    lat = pos.coords.latitude;
+    lon = pos.coords.longitude;
+    const latS = lat >= 0 ? `${lat.toFixed(2)}°N` : `${Math.abs(lat).toFixed(2)}°S`;
+    const lonS = lon >= 0 ? `${lon.toFixed(2)}°E` : `${Math.abs(lon).toFixed(2)}°O`;
+    document.getElementById('locationLabel').textContent = `${latS} ${lonS} · Temps réel`;
+    document.getElementById('footerCoords').textContent = `Lat ${latS} · Lon ${lonS}`;
+    renderSeasonTable();
+    tick();
+  }, () => {
+    document.getElementById('locationLabel').textContent = 'Paris 48.86°N · Défaut';
+  });
+}
+
+
+
+// ─── PWA : Service Worker + Install prompt ───────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW enregistré:', reg.scope))
+      .catch(err => console.warn('SW échec:', err));
+  });
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'flex';
+});
+
+document.getElementById('installBtn')?.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner').style.display = 'none';
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').style.display = 'none';
+  deferredPrompt = null;
+});
+
+// Délégation secteur
+document.querySelectorAll('.sector-btn').forEach(btn => {
+  btn.addEventListener('click', () => tick());
+});
+</script>
+
+  <!-- Bannière installation PWA -->
+  <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#FFFFFF;border-top:1px solid rgba(201,123,0,0.2);box-shadow:0 -4px 20px rgba(0,0,0,0.08);padding:1rem 1.5rem;padding-bottom:max(1rem,env(safe-area-inset-bottom));z-index:100;display:none;align-items:center;justify-content:space-between;gap:1rem;">
+    <div>
+      <div style="font-size:0.7rem;font-weight:600;color:#1A1C22;margin-bottom:0.2rem">Installer HSD</div>
+      <div style="font-size:0.55rem;color:#7A808F;letter-spacing:0.1em">Accès hors-ligne · Écran d'accueil</div>
+    </div>
+    <div style="display:flex;gap:0.5rem">
+      <button onclick="document.getElementById('installBanner').style.display='none'" style="background:transparent;border:1px solid rgba(255,255,255,0.1);color:#5A6478;font-size:0.6rem;padding:0.4rem 0.75rem;cursor:pointer;font-family:Inter,sans-serif;">Plus tard</button>
+      <button id="installBtn" style="background:#F5A623;border:none;color:#0C0E12;font-size:0.6rem;font-weight:600;padding:0.4rem 0.75rem;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:0.1em;">INSTALLER</button>
+    </div>
+  </div>
+
+</body>
+</html>
