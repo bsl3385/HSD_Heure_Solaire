@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSD — Garmin Forerunner 965</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #1A1A2E;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+/* Contexte bureau */
+.device-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+}
+
+/* Boîtier montre */
+.watch-shell {
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+/* Lunette externe */
+.watch-bezel {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #4A4A5A, #1C1C28 60%, #0E0E18);
+  box-shadow:
+    0 0 0 3px #0A0A14,
+    0 0 0 5px #2A2A3A,
+    0 20px 60px rgba(0,0,0,0.8),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* Écran AMOLED */
+.watch-screen {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Canvas SVG du cadran */
+.dial-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Bouton côté */
+.watch-btn {
+  position: absolute;
+  right: -8px;
+  width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #2A2A3A, #3A3A4A);
+  box-shadow: 2px 0 4px rgba(0,0,0,0.5);
+}
+.watch-btn-top    { top: 70px;  height: 28px; }
+.watch-btn-mid    { top: 112px; height: 20px; }
+.watch-btn-bottom { top: 165px; height: 28px; }
+
+/* Bracelet */
+.strap {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  background: linear-gradient(to bottom, #1A1A28, #222232);
+  border-radius: 4px;
+}
+.strap-top    { top: -50px;  height: 55px; border-radius: 6px 6px 0 0; }
+.strap-bottom { bottom: -50px; height: 55px; border-radius: 0 0 6px 6px; }
+
+/* Panneau infos desktop */
+.info-panel {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 400px;
+}
+
+.info-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  min-width: 100px;
+}
+
+.info-card-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 0.3rem;
+}
+
+.info-card-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #F5A623;
+}
+
+.views-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-btn {
+  padding: 0.4rem 0.8rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+
+.view-btn.active {
+  background: rgba(245,166,35,0.15);
+  border-color: rgba(245,166,35,0.4);
+  color: #F5A623;
+}
+</style>
+</head>
+<body>
+
+<div class="device-label">Garmin Forerunner 965 — Simulation cadran HSD</div>
+
+<!-- Sélecteur de vue -->
+<div class="views-row">
+  <button class="view-btn active" onclick="setView('main')">Principal</button>
+  <button class="view-btn" onclick="setView('shift')">Shift</button>
+  <button class="view-btn" onclick="setView('minimal')">Minimal</button>
+</div>
+
+<!-- Boîtier montre -->
+<div class="watch-shell">
+  <div class="strap strap-top"></div>
+  <div class="strap strap-bottom"></div>
+  <div class="watch-bezel"></div>
+  <div class="watch-btn watch-btn-top"></div>
+  <div class="watch-btn watch-btn-mid"></div>
+  <div class="watch-btn watch-btn-bottom"></div>
+  <div class="watch-screen">
+    <svg class="dial-svg" viewBox="0 0 276 276" id="dialSvg">
+      <defs>
+        <!-- Gradient arc jour -->
+        <linearGradient id="dayGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#FF6B35" stop-opacity="0.9"/>
+          <stop offset="50%"  stop-color="#FFE066" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#FF6B35" stop-opacity="0.9"/>
+        </linearGradient>
+        <!-- Gradient HSD arc progression -->
+        <linearGradient id="progGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#F5A623"/>
+          <stop offset="100%" stop-color="#FFE066"/>
+        </linearGradient>
+        <!-- Glow filter -->
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softglow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Clip circulaire -->
+        <clipPath id="screenClip">
+          <circle cx="138" cy="138" r="138"/>
+        </clipPath>
+      </defs>
+
+      <g clip-path="url(#screenClip)">
+        <!-- Fond noir AMOLED -->
+        <rect width="276" height="276" fill="#000"/>
+
+        <!-- Halo ambiant central -->
+        <radialGradient id="ambientGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#F5A623" stop-opacity="0.06"/>
+          <stop offset="100%" stop-color="#000"    stop-opacity="0"/>
+        </radialGradient>
+        <circle cx="138" cy="138" r="138" fill="url(#ambientGlow)" id="ambientCircle"/>
+
+        <!-- ─── VUE PRINCIPALE ─────────────────────────────── -->
+        <g id="viewMain">
+
+          <!-- Arc de fond (360°) -->
+          <circle cx="138" cy="138" r="124"
+            fill="none"
+            stroke="rgba(255,255,255,0.04)"
+            stroke-width="10"/>
+
+          <!-- Arc nuit -->
+          <circle cx="138" cy="138" r="124"
+            fill="none"
+            stroke="rgba(91,141,239,0.15)"
+            stroke-width="10"
+            stroke-dasharray="779.2"
+            id="nightArc"/>
+
+          <!-- Arc jour (lever→coucher) -->
+          <circle cx="138" cy="138" r="124"
+            fill="none"
+            stroke="url(#dayGrad)"
+            stroke-width="10"
+            stroke-linecap="butt"
+            stroke-dasharray="779.2"
+            id="dayArc"
+            transform="rotate(-90 138 138)"/>
+
+          <!-- Arc progression HSD (0→actuel) -->
+          <circle cx="138" cy="138" r="124"
+            fill="none"
+            stroke="url(#progGrad)"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="779.2"
+            id="progArc"
+            transform="rotate(-90 138 138)"
+            filter="url(#glow)"/>
+
+          <!-- Marqueur lever -->
+          <circle cx="138" cy="14" r="4" fill="#FF6B35" id="sunriseMarker" filter="url(#glow)"/>
+          <!-- Marqueur coucher -->
+          <circle cx="138" cy="14" r="4" fill="#FF6B35" id="sunsetMarker" filter="url(#glow)"/>
+          <!-- Marqueur position actuelle -->
+          <circle cx="138" cy="14" r="5" fill="#F5A623" id="nowMarker" filter="url(#softglow)"/>
+
+          <!-- Graduations -->
+          <g id="ticks"></g>
+
+          <!-- Zone centrale -->
+
+          <!-- Phase en haut -->
+          <text x="138" y="72" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="8" font-weight="500"
+            letter-spacing="2" fill="rgba(255,255,255,0.4)"
+            id="phaseLabel">ZÉNITH</text>
+
+          <!-- Valeur HSD principale -->
+          <text x="138" y="118" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="46" font-weight="700"
+            fill="#FFFFFF" letter-spacing="-1"
+            id="hsdMain">50</text>
+
+          <!-- Unité -->
+          <text x="138" y="134" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="8" font-weight="400"
+            letter-spacing="3" fill="rgba(255,255,255,0.3)">HSD</text>
+
+          <!-- Séparateur -->
+          <line x1="98" y1="145" x2="178" y2="145"
+            stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>
+
+          <!-- Heure légale -->
+          <text x="138" y="162" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="14" font-weight="300"
+            fill="rgba(255,255,255,0.5)" letter-spacing="1"
+            id="legalMain">--:--</text>
+
+          <!-- Données basses : lever / coucher -->
+          <text x="68" y="200" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="7" font-weight="400"
+            fill="rgba(255,255,255,0.3)">LEVER</text>
+          <text x="68" y="212" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="11" font-weight="600"
+            fill="#FF6B35" id="sunriseTime">--:--</text>
+
+          <text x="138" y="200" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="7" font-weight="400"
+            fill="rgba(255,255,255,0.3)">DURÉE</text>
+          <text x="138" y="212" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="11" font-weight="600"
+            fill="rgba(255,255,255,0.7)" id="dayDur">--h--</text>
+
+          <text x="208" y="200" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="7" font-weight="400"
+            fill="rgba(255,255,255,0.3)">COUCHER</text>
+          <text x="208" y="212" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="11" font-weight="600"
+            fill="#FF6B35" id="sunsetTime">--:--</text>
+
+          <!-- Barre de progression jour -->
+          <rect x="38" y="228" width="200" height="2"
+            rx="1" fill="rgba(255,255,255,0.06)"/>
+          <rect x="38" y="228" width="0" height="2"
+            rx="1" fill="#F5A623" id="dayProgressBar"/>
+
+          <!-- Date -->
+          <text x="138" y="252" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="8" font-weight="400"
+            letter-spacing="1" fill="rgba(255,255,255,0.2)"
+            id="dateLabel">DIM 14 JUIN</text>
+
+        </g>
+
+        <!-- ─── VUE SHIFT ──────────────────────────────────── -->
+        <g id="viewShift" display="none">
+
+          <!-- Arc fond -->
+          <circle cx="138" cy="138" r="124"
+            fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="10"/>
+
+          <!-- Arc shift actif -->
+          <circle cx="138" cy="138" r="124"
+            fill="none"
+            stroke="#3ECFB2"
+            stroke-width="10"
+            stroke-linecap="butt"
+            stroke-dasharray="779.2"
+            id="shiftArc"
+            transform="rotate(-90 138 138)"
+            opacity="0.7"/>
+
+          <!-- Marqueur position -->
+          <circle cx="138" cy="14" r="5" fill="#F5A623" id="nowMarker2" filter="url(#softglow)"/>
+
+          <text x="138" y="72" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="8" font-weight="500"
+            letter-spacing="2" fill="rgba(62,207,178,0.8)">SHIFT EN COURS</text>
+
+          <text x="138" y="110" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="36" font-weight="700"
+            fill="#FFFFFF" id="shiftName">MATIN</text>
+
+          <text x="138" y="132" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="9" font-weight="400"
+            letter-spacing="1" fill="rgba(255,255,255,0.3)"
+            id="shiftHSD">S25 → S55</text>
+
+          <line x1="88" y1="148" x2="188" y2="148"
+            stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>
+
+          <!-- Progression shift -->
+          <text x="138" y="168" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="11" font-weight="300"
+            fill="rgba(255,255,255,0.4)">Progression</text>
+
+          <rect x="58" y="178" width="160" height="4"
+            rx="2" fill="rgba(255,255,255,0.06)"/>
+          <rect x="58" y="178" width="0" height="4"
+            rx="2" fill="#3ECFB2" id="shiftProgressBar"/>
+
+          <text x="138" y="198" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="22" font-weight="600"
+            fill="#3ECFB2" id="shiftPct">--%</text>
+
+          <!-- Temps restant -->
+          <text x="138" y="222" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="8"
+            fill="rgba(255,255,255,0.3)" letter-spacing="1">RESTE</text>
+          <text x="138" y="240" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="14" font-weight="500"
+            fill="rgba(255,255,255,0.6)" id="shiftRemain">--h--</text>
+
+          <text x="138" y="260" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="8" font-weight="400"
+            letter-spacing="1" fill="rgba(255,255,255,0.2)"
+            id="dateLabel2">DIM 14 JUIN</text>
+        </g>
+
+        <!-- ─── VUE MINIMAL ────────────────────────────────── -->
+        <g id="viewMinimal" display="none">
+
+          <!-- Arc fin -->
+          <circle cx="138" cy="138" r="128"
+            fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="4"/>
+          <circle cx="138" cy="138" r="128"
+            fill="none" stroke="url(#progGrad)" stroke-width="4"
+            stroke-linecap="round"
+            stroke-dasharray="779.2"
+            id="minArc"
+            transform="rotate(-90 138 138)"
+            filter="url(#glow)"/>
+
+          <!-- Marqueur -->
+          <circle cx="138" cy="10" r="4" fill="#F5A623" id="nowMarker3" filter="url(#softglow)"/>
+
+          <!-- HSD énorme -->
+          <text x="138" y="155" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="72" font-weight="700"
+            fill="#FFFFFF" letter-spacing="-3"
+            id="hsdMinimal">50</text>
+
+          <!-- Phase -->
+          <text x="138" y="180" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="9" font-weight="400"
+            letter-spacing="3" fill="rgba(255,255,255,0.3)"
+            id="phaseMinimal">ZÉNITH</text>
+
+          <!-- Heure discrète -->
+          <text x="138" y="240" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="11" font-weight="300"
+            fill="rgba(255,255,255,0.2)" letter-spacing="2"
+            id="legalMinimal">--:--</text>
+        </g>
+
+      </g>
+    </svg>
+  </div>
+</div>
+
+<!-- Infos -->
+<div class="info-panel">
+  <div class="info-card">
+    <div class="info-card-label">HSD</div>
+    <div class="info-card-value" id="infoHSD">--</div>
+  </div>
+  <div class="info-card">
+    <div class="info-card-label">Phase</div>
+    <div class="info-card-value" style="color:#E8E4D9;font-size:0.75rem" id="infoPhase">--</div>
+  </div>
+  <div class="info-card">
+    <div class="info-card-label">Midi solaire</div>
+    <div class="info-card-value" id="infoNoon">--:--</div>
+  </div>
+</div>
+
+<div class="device-label">Cliquez sur l'écran pour changer de vue · Calculs en temps réel</div>
+
+<script>
+// ─── Utilitaires ─────────────────────────────────────────────────────────────
+function toRad(d) { return d * Math.PI / 180; }
+function toDeg(r) { return r * 180 / Math.PI; }
+
+function minToHHMM(m) {
+  const t = ((m % 1440) + 1440) % 1440;
+  const h = Math.floor(t / 60), mn = Math.floor(t % 60);
+  return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`;
+}
+
+function formatDur(min) {
+  const h = Math.floor(min / 60), m = Math.round(min % 60);
+  return `${h}h${m > 0 ? String(m).padStart(2,'0') : '00'}`;
+}
+
+// ─── Astronomie NOAA ─────────────────────────────────────────────────────────
+function getSolarTimes(date, lat, lon) {
+  const JD = Math.floor(date.getTime() / 86400000) + 2440587.5 + 0.5;
+  const n  = JD - 2451545.0;
+  const L0 = (280.46646 + 0.9856474 * n) % 360;
+  const M  = (357.52911 + 0.9856003 * n) % 360;
+  const Mr = toRad(M);
+  const C  = 1.914602 * Math.sin(Mr) + 0.019993 * Math.sin(2*Mr) + 0.000289 * Math.sin(3*Mr);
+  const sunLon = L0 + C;
+  const e0  = 23.439291 - 0.0000004 * n;
+  const e0r = toRad(e0);
+  const decr = Math.asin(Math.sin(e0r) * Math.sin(toRad(sunLon)));
+  const y = Math.tan(toRad(e0/2)) ** 2;
+  const e = 0.016708634;
+  const EqT = 4 * toDeg(
+    y * Math.sin(toRad(2*L0))
+    - 2*e * Math.sin(Mr)
+    + 4*e*y * Math.sin(Mr) * Math.cos(toRad(2*L0))
+    - 0.5*y*y * Math.sin(toRad(4*L0))
+    - 1.25*e*e * Math.sin(toRad(2*M))
+  );
+  const tzOffset = -date.getTimezoneOffset();
+  const solarNoon = 720 - 4*lon - EqT + tzOffset;
+  const cosHA = (Math.cos(toRad(90.833)) - Math.sin(toRad(lat)) * Math.sin(decr))
+              / (Math.cos(toRad(lat)) * Math.cos(decr));
+  let sunrise, sunset;
+  if (cosHA < -1) { sunrise = 0; sunset = 1440; }
+  else if (cosHA > 1) { sunrise = 720; sunset = 720; }
+  else {
+    const HA = toDeg(Math.acos(cosHA));
+    sunrise = solarNoon - 4*HA;
+    sunset  = solarNoon + 4*HA;
+  }
+  return { sunrise, sunset, solarNoon };
+}
+
+function minutesToHSD(minutes, solarNoon) {
+  let delta = minutes - solarNoon;
+  if (delta > 720)  delta -= 1440;
+  if (delta < -720) delta += 1440;
+  return 50 + (delta / 1440) * 100;
+}
+
+function hsdToMinutes(hsd, solarNoon) {
+  const offset = (hsd - 50) / 100 * 1440;
+  return ((solarNoon + offset) % 1440 + 1440) % 1440;
+}
+
+// ─── SVG helpers ─────────────────────────────────────────────────────────────
+const CX = 138, CY = 138;
+
+// Convertit un angle HSD (0-100) en coordonnées sur le cercle r
+function hsdToXY(hsd, r) {
+  const angle = ((hsd / 100) * 360 - 90) * Math.PI / 180;
+  return {
+    x: CX + r * Math.cos(angle),
+    y: CY + r * Math.sin(angle)
+  };
+}
+
+// Crée un arc SVG stroke-dasharray pour un segment HSD
+function arcDash(startHSD, endHSD, circumference) {
+  let span = endHSD - startHSD;
+  if (span < 0) span += 100;
+  const dashLen  = (span / 100) * circumference;
+  const gapLen   = circumference - dashLen;
+  const offset   = circumference - (startHSD / 100) * circumference;
+  return { dasharray: `${dashLen} ${gapLen}`, dashoffset: offset };
+}
+
+// ─── Graduations ─────────────────────────────────────────────────────────────
+function drawTicks() {
+  const g = document.getElementById('ticks');
+  g.innerHTML = '';
+  for (let i = 0; i < 100; i++) {
+    const angle = ((i / 100) * 360 - 90) * Math.PI / 180;
+    const isMajor  = i % 25 === 0;
+    const isMedium = i % 10 === 0;
+    const rOuter = 113;
+    const rInner = isMajor ? 100 : isMedium ? 105 : 108;
+    const x1 = CX + rOuter * Math.cos(angle);
+    const y1 = CY + rOuter * Math.sin(angle);
+    const x2 = CX + rInner * Math.cos(angle);
+    const y2 = CY + rInner * Math.sin(angle);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke', isMajor ? 'rgba(255,255,255,0.5)' : isMedium ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)');
+    line.setAttribute('stroke-width', isMajor ? 1.5 : 0.8);
+    g.appendChild(line);
+
+    if (isMajor) {
+      const labels = {0:'0', 25:'25', 50:'50', 75:'75'};
+      if (labels[i] !== undefined) {
+        const rLabel = 92;
+        const lx = CX + rLabel * Math.cos(angle);
+        const ly = CY + rLabel * Math.sin(angle);
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', lx); txt.setAttribute('y', ly);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('dominant-baseline', 'middle');
+        txt.setAttribute('font-family', 'Inter,sans-serif');
+        txt.setAttribute('font-size', '7');
+        txt.setAttribute('fill', 'rgba(255,255,255,0.2)');
+        txt.textContent = labels[i];
+        g.appendChild(txt);
+      }
+    }
+  }
+}
+
+// ─── Vues ────────────────────────────────────────────────────────────────────
+let currentView = 'main';
+const views = ['main', 'shift', 'minimal'];
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('viewMain').setAttribute('display', v === 'main' ? 'block' : 'none');
+  document.getElementById('viewShift').setAttribute('display', v === 'shift' ? 'block' : 'none');
+  document.getElementById('viewMinimal').setAttribute('display', v === 'minimal' ? 'block' : 'none');
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.view-btn[onclick="setView('${v}')"]`).classList.add('active');
+}
+
+document.querySelector('.watch-screen').addEventListener('click', () => {
+  const idx = (views.indexOf(currentView) + 1) % views.length;
+  setView(views[idx]);
+});
+
+// ─── Données shift ────────────────────────────────────────────────────────────
+const SHIFTS = [
+  { name: 'NUIT',       hsdStart: 85,  hsdEnd: 25,  color: '#5B8DEF' },
+  { name: 'MATIN',      hsdStart: 25,  hsdEnd: 55,  color: '#F5A623' },
+  { name: 'APRÈS-MIDI', hsdStart: 55,  hsdEnd: 85,  color: '#3ECFB2' },
+];
+
+function getActiveShift(hsd) {
+  for (const s of SHIFTS) {
+    let inShift;
+    if (s.hsdEnd > s.hsdStart) inShift = hsd >= s.hsdStart && hsd < s.hsdEnd;
+    else inShift = hsd >= s.hsdStart || hsd < s.hsdEnd;
+    if (inShift) return s;
+  }
+  return SHIFTS[0];
+}
+
+// ─── Tick ────────────────────────────────────────────────────────────────────
+let lat = 48.8566, lon = 2.3522;
+
+function getPhase(hsd, sunriseHSD, sunsetHSD) {
+  if (hsd < sunriseHSD - 1) return 'NUIT PROFONDE';
+  if (hsd < sunriseHSD)     return 'AUBE';
+  if (hsd < sunriseHSD + 8) return 'MATIN TÔT';
+  if (hsd < 46)             return 'MATIN';
+  if (hsd < 54)             return 'ZÉNITH';
+  if (hsd < sunsetHSD - 5)  return 'APRÈS-MIDI';
+  if (hsd < sunsetHSD)      return 'CRÉPUSCULE';
+  return 'NUIT';
+}
+
+function tick() {
+  const now = new Date();
+  const { sunrise, sunset, solarNoon } = getSolarTimes(now, lat, lon);
+  const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+  const hsd = minutesToHSD(nowMin, solarNoon);
+  const hsdInt = Math.floor(hsd);
+  const sunriseHSD = minutesToHSD(sunrise, solarNoon);
+  const sunsetHSD  = minutesToHSD(sunset, solarNoon);
+  const circ = 2 * Math.PI * 124; // ~779.2
+
+  // ── Vue principale ──
+  // Arc jour
+  const dayDash = arcDash(sunriseHSD, sunsetHSD, circ);
+  const dayArc = document.getElementById('dayArc');
+  dayArc.setAttribute('stroke-dasharray', dayDash.dasharray);
+  dayArc.setAttribute('stroke-dashoffset', dayDash.dashoffset);
+
+  // Arc progression (0 → hsd)
+  const progDash = arcDash(0, hsd, circ);
+  document.getElementById('progArc').setAttribute('stroke-dasharray', progDash.dasharray);
+  document.getElementById('progArc').setAttribute('stroke-dashoffset', progDash.dashoffset);
+
+  // Arc minimal
+  const minDash = arcDash(0, hsd, 2 * Math.PI * 128);
+  document.getElementById('minArc').setAttribute('stroke-dasharray', minDash.dasharray);
+  document.getElementById('minArc').setAttribute('stroke-dashoffset', minDash.dashoffset);
+
+  // Marqueurs
+  const posNow     = hsdToXY(hsd, 124);
+  const posSunrise = hsdToXY(sunriseHSD, 124);
+  const posSunset  = hsdToXY(sunsetHSD, 124);
+  const posNow2    = hsdToXY(hsd, 128);
+
+  document.getElementById('nowMarker').setAttribute('cx', posNow.x);
+  document.getElementById('nowMarker').setAttribute('cy', posNow.y);
+  document.getElementById('nowMarker2').setAttribute('cx', posNow.x);
+  document.getElementById('nowMarker2').setAttribute('cy', posNow.y);
+  document.getElementById('nowMarker3').setAttribute('cx', posNow2.x);
+  document.getElementById('nowMarker3').setAttribute('cy', posNow2.y);
+  document.getElementById('sunriseMarker').setAttribute('cx', posSunrise.x);
+  document.getElementById('sunriseMarker').setAttribute('cy', posSunrise.y);
+  document.getElementById('sunsetMarker').setAttribute('cx', posSunset.x);
+  document.getElementById('sunsetMarker').setAttribute('cy', posSunset.y);
+
+  // Textes vue principale
+  document.getElementById('hsdMain').textContent = hsdInt;
+  document.getElementById('legalMain').textContent =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('sunriseTime').textContent = minToHHMM(sunrise);
+  document.getElementById('sunsetTime').textContent  = minToHHMM(sunset);
+  document.getElementById('dayDur').textContent = formatDur(sunset - sunrise);
+  document.getElementById('phaseLabel').textContent = getPhase(hsd, sunriseHSD, sunsetHSD);
+
+  // Barre progression jour
+  const dayPct = Math.max(0, Math.min(1, (hsd - sunriseHSD) / (sunsetHSD - sunriseHSD)));
+  document.getElementById('dayProgressBar').setAttribute('width', (200 * dayPct).toFixed(1));
+
+  // Date
+  const dateStr = now.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'long'})
+    .toUpperCase().replace('.','');
+  document.getElementById('dateLabel').textContent = dateStr;
+  document.getElementById('dateLabel2').textContent = dateStr;
+
+  // ── Vue shift ──
+  const shift = getActiveShift(hsd);
+  let shiftDur = shift.hsdEnd - shift.hsdStart;
+  if (shiftDur < 0) shiftDur += 100;
+  let elapsed = hsd - shift.hsdStart;
+  if (elapsed < 0) elapsed += 100;
+  const shiftPct = Math.min(100, (elapsed / shiftDur) * 100);
+  const remainHSD = shiftDur - elapsed;
+  const remainMin = (remainHSD / 100) * 1440;
+
+  document.getElementById('shiftName').textContent = shift.name;
+  document.getElementById('shiftHSD').textContent = `S${shift.hsdStart} → S${shift.hsdEnd}`;
+  document.getElementById('shiftPct').textContent = `${Math.round(shiftPct)}%`;
+  document.getElementById('shiftRemain').textContent = formatDur(remainMin);
+  document.getElementById('shiftProgressBar').setAttribute('width', (160 * shiftPct / 100).toFixed(1));
+  document.getElementById('shiftProgressBar').setAttribute('fill', shift.color);
+
+  // Arc shift
+  const shiftCirc = 2 * Math.PI * 124;
+  const shiftDash = arcDash(shift.hsdStart, hsd, shiftCirc);
+  const shiftArc = document.getElementById('shiftArc');
+  shiftArc.setAttribute('stroke-dasharray', shiftDash.dasharray);
+  shiftArc.setAttribute('stroke-dashoffset', shiftDash.dashoffset);
+  shiftArc.setAttribute('stroke', shift.color);
+
+  // ── Vue minimal ──
+  document.getElementById('hsdMinimal').textContent = hsdInt;
+  document.getElementById('phaseMinimal').textContent = getPhase(hsd, sunriseHSD, sunsetHSD);
+  document.getElementById('legalMinimal').textContent =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  // ── Infos panneau ──
+  document.getElementById('infoHSD').textContent = hsd.toFixed(2);
+  document.getElementById('infoPhase').textContent = getPhase(hsd, sunriseHSD, sunsetHSD);
+  document.getElementById('infoNoon').textContent = minToHHMM(solarNoon);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+drawTicks();
+tick();
+setInterval(tick, 1000);
+
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    lat = pos.coords.latitude;
+    lon = pos.coords.longitude;
+    tick();
+  });
+}
+</script>
+</body>
+</html>
